@@ -1,12 +1,13 @@
 package handler
 
 import (
-	errors "github.com/chris910512/travel-chat/internal/usecase/errors"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/chris910512/travel-chat/internal/delivery/http/response"
 	"github.com/chris910512/travel-chat/internal/usecase/dto"
+	usecaseErrors "github.com/chris910512/travel-chat/internal/usecase/errors"
 	usecaseInterface "github.com/chris910512/travel-chat/internal/usecase/interface"
 	"github.com/gin-gonic/gin"
 )
@@ -243,24 +244,24 @@ func (h *UserHandler) HealthCheck(c *gin.Context) {
 
 // handleUsecaseError - Usecase 에러를 HTTP 응답으로 변환하는 헬퍼 함수
 func handleUsecaseError(c *gin.Context, err error) {
-	switch err {
-	case errors.ErrUserNotFound:
+	switch {
+	case errors.Is(err, usecaseErrors.ErrUserNotFound):
 		response.NotFound(c, err.Error())
-	case errors.ErrEmailAlreadyExists:
+	case errors.Is(err, usecaseErrors.ErrEmailAlreadyExists):
 		response.Conflict(c, err.Error())
-	case errors.ErrInvalidCredentials:
+	case errors.Is(err, usecaseErrors.ErrInvalidCredentials):
 		response.Unauthorized(c, err.Error())
-	case errors.ErrWeakPassword:
+	case errors.Is(err, usecaseErrors.ErrWeakPassword):
 		response.BadRequest(c, err.Error())
-	case errors.ErrInvalidEmail:
+	case errors.Is(err, usecaseErrors.ErrInvalidEmail):
 		response.BadRequest(c, err.Error())
-	case errors.ErrInvalidTravelDates:
+	case errors.Is(err, usecaseErrors.ErrInvalidTravelDates):
 		response.BadRequest(c, err.Error())
-	case errors.ErrPastTravelDate:
+	case errors.Is(err, usecaseErrors.ErrPastTravelDate):
 		response.BadRequest(c, err.Error())
-	case errors.ErrUnauthorized:
+	case errors.Is(err, usecaseErrors.ErrUnauthorized):
 		response.Unauthorized(c, err.Error())
-	case errors.ErrForbidden:
+	case errors.Is(err, usecaseErrors.ErrForbidden):
 		response.Forbidden(c, err.Error())
 	default:
 		response.InternalServerError(c, "서버 내부 오류가 발생했습니다", err.Error())
