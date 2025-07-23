@@ -6,8 +6,9 @@ import (
 
 func RunMigrations(db *gorm.DB) error {
 	return db.AutoMigrate(
-	//&entity.User{},
-	// Add other models here as needed
+	//&user.User{},
+	//&chatroom.ChatRoom{},
+	//&message.Message{},
 	)
 }
 
