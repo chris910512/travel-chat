@@ -29,3 +29,39 @@ docker-compose.override.yml
 
 tmp/
 temp/
+
+# Generated protobuf files (keep source .proto files)
+pkg/proto/**/*.pb.go
+pkg/proto/**/*.pb.gw.go
+pkg/proto/**/*_grpc.pb.go
+proto/**/*.pb.go
+proto/**/*.pb.gw.go
+proto/**/*_grpc.pb.go
+
+# Generated documentation
+docs/**/*.swagger.json
+
+# Third-party dependencies
+third_party/
+
+# Build outputs
+main
+travel-chat
+*.test
+
+# Coverage reports
+coverage.out
+*.cover
+
+# IDE specific files
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/shelf
+
+# OS specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

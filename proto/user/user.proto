@@ -1,0 +1,241 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "github.com/chris910512/travel-chat/pkg/proto/user";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// User 서비스 정의
+service UserService {
+  // 사용자 등록
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/register"
+      body: "*"
+    };
+  }
+
+  // 사용자 로그인
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  // 토큰 갱신
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  // 프로필 조회
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}"
+    };
+  }
+
+  // 내 프로필 조회
+  rpc GetMyProfile(GetMyProfileRequest) returns (GetProfileResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me"
+    };
+  }
+
+  // 사용자 목록 조회
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  }
+
+  // 목적지별 사용자 조회
+  rpc GetUsersByDestination(GetUsersByDestinationRequest) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/destination/{country}/{city}"
+    };
+  }
+
+  // 프로필 업데이트
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/{user_id}"
+      body: "*"
+    };
+  }
+
+  // 활동 시간 업데이트
+  rpc UpdateLastActive(UpdateLastActiveRequest) returns (UpdateLastActiveResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{user_id}/activity"
+      body: "*"
+    };
+  }
+}
+
+// Enums
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  GENDER_MALE = 1;
+  GENDER_FEMALE = 2;
+  GENDER_OTHER = 3;
+}
+
+enum TravelPurpose {
+  TRAVEL_PURPOSE_UNSPECIFIED = 0;
+  TRAVEL_PURPOSE_TOURISM = 1;
+  TRAVEL_PURPOSE_BUSINESS = 2;
+  TRAVEL_PURPOSE_BACKPACKING = 3;
+  TRAVEL_PURPOSE_FOOD_TOUR = 4;
+  TRAVEL_PURPOSE_CULTURE = 5;
+  TRAVEL_PURPOSE_ACTIVITY = 6;
+  TRAVEL_PURPOSE_RELAXATION = 7;
+}
+
+enum TravelStyle {
+  TRAVEL_STYLE_UNSPECIFIED = 0;
+  TRAVEL_STYLE_PLANNED = 1;
+  TRAVEL_STYLE_SPONTANEOUS = 2;
+  TRAVEL_STYLE_LUXURY = 3;
+  TRAVEL_STYLE_BUDGET = 4;
+  TRAVEL_STYLE_ADVENTURE = 5;
+  TRAVEL_STYLE_LEISURELY = 6;
+}
+
+// User 메시지
+message User {
+  uint32 id = 1;
+  string email = 2;
+  string name = 3;
+  uint32 age = 4;
+  Gender gender = 5;
+  string profile_pic = 6;
+  string country = 7;
+  string city = 8;
+  string destination = 9;
+  google.protobuf.Timestamp travel_start = 10;
+  google.protobuf.Timestamp travel_end = 11;
+  string bio = 12;
+  TravelPurpose travel_purpose = 13;
+  uint32 travel_budget = 14;
+  TravelStyle travel_style = 15;
+  string activity_status = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}
+
+// Request/Response 메시지들
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+  uint32 age = 4;
+  Gender gender = 5;
+  string country = 6;
+  string city = 7;
+  google.protobuf.Timestamp travel_start = 8;
+  google.protobuf.Timestamp travel_end = 9;
+  string bio = 10;
+  TravelPurpose travel_purpose = 11;
+  uint32 travel_budget = 12;
+  TravelStyle travel_style = 13;
+}
+
+message RegisterResponse {
+  User user = 1;
+  string message = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  User user = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  string token_type = 4;
+  uint32 expires_in = 5;
+  string message = 6;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string token_type = 3;
+  uint32 expires_in = 4;
+  string message = 5;
+}
+
+message GetProfileRequest {
+  uint32 user_id = 1;
+}
+
+message GetMyProfileRequest {
+  // JWT에서 사용자 ID 추출
+}
+
+message GetProfileResponse {
+  User user = 1;
+  string message = 2;
+}
+
+message GetUsersRequest {
+  uint32 page = 1;
+  uint32 limit = 2;
+  string country = 3;
+  string city = 4;
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+  uint32 page = 2;
+  uint32 limit = 3;
+  uint64 total_count = 4;
+  uint32 total_pages = 5;
+  string message = 6;
+}
+
+message GetUsersByDestinationRequest {
+  string country = 1;
+  string city = 2;
+}
+
+message UpdateProfileRequest {
+  uint32 user_id = 1;
+  optional string name = 2;
+  optional uint32 age = 3;
+  optional Gender gender = 4;
+  optional string profile_pic = 5;
+  optional string country = 6;
+  optional string city = 7;
+  optional google.protobuf.Timestamp travel_start = 8;
+  optional google.protobuf.Timestamp travel_end = 9;
+  optional string bio = 10;
+  optional TravelPurpose travel_purpose = 11;
+  optional uint32 travel_budget = 12;
+  optional TravelStyle travel_style = 13;
+}
+
+message UpdateProfileResponse {
+  User user = 1;
+  string message = 2;
+}
+
+message UpdateLastActiveRequest {
+  uint32 user_id = 1;
+}
+
+message UpdateLastActiveResponse {
+  string message = 1;
+}
