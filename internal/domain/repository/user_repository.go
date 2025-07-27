@@ -15,4 +15,5 @@ type UserRepository interface {
 	GetByDestination(country, city string) ([]*user.User, error)
 	GetActiveUsers() ([]*user.User, error)
 	UpdateLastActive(userID uint) error
+	Count() (int64, error)
 }

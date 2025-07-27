@@ -49,11 +49,6 @@ type UserResponse struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-// 로그인 응답
-type LoginResponse struct {
-	User  UserResponse `json:"user"`
-	Token string       `json:"token"`
-}
 
 // 사용자 프로필 업데이트 요청
 type UpdateUserRequest struct {

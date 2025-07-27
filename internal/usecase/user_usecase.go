@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"github.com/chris910512/travel-chat/internal/domain/entity/user"
+	"github.com/chris910512/travel-chat/internal/pkg/jwt"
 	"time"
 
 	"github.com/chris910512/travel-chat/internal/domain/repository"
@@ -14,13 +15,15 @@ import (
 )
 
 type userUsecase struct {
-	userRepo repository.UserRepository
+	userRepo   repository.UserRepository
+	jwtService *jwt.JWTService
 }
 
 // NewUserUsecase - User Usecase 생성자
-func NewUserUsecase(userRepo repository.UserRepository) usecaseInterface.UserUsecase {
+func NewUserUsecase(userRepo repository.UserRepository, jwtService *jwt.JWTService) usecaseInterface.UserUsecase {
 	return &userUsecase{
-		userRepo: userRepo,
+		userRepo:   userRepo,
+		jwtService: jwtService,
 	}
 }
 
@@ -78,12 +81,38 @@ func (u *userUsecase) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}
 
 	// 4. JWT 토큰 생성 (임시로 더미 토큰 반환, 나중에 JWT 구현)
-	token := "dummy_jwt_token_" + userEntity.Email
+	accessToken, err := u.jwtService.GenerateToken(userEntity.ID, userEntity.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := u.jwtService.GenerateRefreshToken(userEntity.ID, userEntity.Email)
+	if err != nil {
+		return nil, err
+	}
 
 	// 5. 응답 반환
 	return &dto.LoginResponse{
-		User:  *dto.FromUserEntity(userEntity),
-		Token: token,
+		User:         *dto.FromUserEntity(userEntity),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    86400, // 24시간
+	}, nil
+}
+
+// RefreshToken - 토큰 갱신 메서드 추가
+func (u *userUsecase) RefreshToken(ctx context.Context, req *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
+	accessToken, refreshToken, err := u.jwtService.RefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, errors.ErrInvalidCredentials
+	}
+
+	return &dto.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    86400,
 	}, nil
 }
 
@@ -127,6 +156,7 @@ func (u *userUsecase) GetUsers(ctx context.Context, req *dto.GetUsersRequest) (*
 	}
 
 	var users []*user.User
+	var totalCount int64
 	var err error
 
 	// 필터링 조건에 따라 조회
@@ -135,7 +165,9 @@ func (u *userUsecase) GetUsers(ctx context.Context, req *dto.GetUsersRequest) (*
 		if err != nil {
 			return nil, err
 		}
-		// 페이징 처리 (메모리에서)
+		totalCount = int64(len(users))
+
+		// 메모리에서 페이징
 		offset := req.GetOffset()
 		end := offset + req.Limit
 		if offset >= len(users) {
@@ -147,14 +179,17 @@ func (u *userUsecase) GetUsers(ctx context.Context, req *dto.GetUsersRequest) (*
 			users = users[offset:end]
 		}
 	} else {
+		// 전체 카운트 조회
+		totalCount, err = u.userRepo.Count()
+		if err != nil {
+			return nil, err
+		}
+
 		users, err = u.userRepo.List(req.GetOffset(), req.Limit)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	// TODO: 실제로는 전체 카운트를 별도로 조회해야 함
-	totalCount := int64(len(users))
 
 	return &dto.GetUsersResponse{
 		Users:      dto.FromUserEntities(users),

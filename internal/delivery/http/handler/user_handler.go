@@ -23,6 +23,27 @@ func NewUserHandler(userUsecase usecaseInterface.UserUsecase) *UserHandler {
 	}
 }
 
+// RefreshToken - 토큰 갱신
+// POST /api/auth/refresh
+func (h *UserHandler) RefreshToken(c *gin.Context) {
+	var req dto.RefreshTokenRequest
+
+	// 요청 바인딩
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "요청 형식이 올바르지 않습니다", err.Error())
+		return
+	}
+
+	// 토큰 갱신 처리
+	refreshResp, err := h.userUsecase.RefreshToken(c.Request.Context(), &req)
+	if err != nil {
+		handleUsecaseError(c, err)
+		return
+	}
+
+	response.Success(c, "토큰이 갱신되었습니다", refreshResp)
+}
+
 // Register - 사용자 등록
 // POST /api/users/register
 func (h *UserHandler) Register(c *gin.Context) {
@@ -208,22 +229,21 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 // GetMe - 현재 로그인한 사용자 정보 조회 (JWT 토큰 기반)
 // GET /api/users/me
 func (h *UserHandler) GetMe(c *gin.Context) {
-	// TODO: JWT 미들웨어에서 설정한 사용자 ID 가져오기
-	// 현재는 임시로 헤더에서 가져옴
-	userIDHeader := c.GetHeader("X-User-ID")
-	if userIDHeader == "" {
+	// JWT 미들웨어에서 설정한 사용자 ID 가져오기
+	userID, exists := c.Get("user_id")
+	if !exists {
 		response.Unauthorized(c, "인증이 필요합니다")
 		return
 	}
 
-	userID, err := strconv.ParseUint(userIDHeader, 10, 32)
-	if err != nil {
+	id, ok := userID.(uint)
+	if !ok {
 		response.Unauthorized(c, "올바르지 않은 인증 정보입니다")
 		return
 	}
 
 	// 사용자 조회
-	user, err := h.userUsecase.GetByID(c.Request.Context(), uint(userID))
+	user, err := h.userUsecase.GetByID(c.Request.Context(), id)
 	if err != nil {
 		handleUsecaseError(c, err)
 		return

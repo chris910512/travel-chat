@@ -10,6 +10,7 @@ type UserUsecase interface {
 	// 사용자 인증
 	Register(ctx context.Context, req *dto.CreateUserRequest) (*dto.UserResponse, error)
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
+	RefreshToken(ctx context.Context, req *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error)
 
 	// 사용자 조회
 	GetByID(ctx context.Context, id uint) (*dto.UserResponse, error)

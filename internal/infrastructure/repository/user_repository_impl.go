@@ -71,3 +71,9 @@ func (r *userRepositoryImpl) UpdateLastActive(userID uint) error {
 	return r.db.Model(&user.User{}).Where("id = ?", userID).
 		Update("last_active", time.Now()).Error
 }
+
+func (r *userRepositoryImpl) Count() (int64, error) {
+	var count int64
+	err := r.db.Model(&user.User{}).Count(&count).Error
+	return count, err
+}
